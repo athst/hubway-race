@@ -1,0 +1,164 @@
+<html>
+	<head>
+		<title>Hubway Routes</title>
+		<script type="text/javascript" src = "underscore-min.js"></script>
+		<script type="text/javascript" src = "backbone-min.js"></script>
+		<script type="text/javascript" src = "d3/d3.v2.js"></script>
+		<style type="text/css">
+			body {
+				font-family:"helvetica neue","helvetica",sans-serif;
+				font-size:0.8em;
+			}
+			
+			.container svg {
+			
+				
+			}
+			
+		</style>
+	</head>
+	<body>
+		<h1>Hubway Bike Race!!!!!</h1>
+		<script type="text/javascript">
+			
+			// based on mike bostock's https://gist.github.com/1584697
+	
+			// global variables like this is probably not the right way
+			var data;
+			var svg;
+			var x;
+			var y;
+			var margin;
+			var width;
+			var height;
+			var intervalTimer;
+			
+			// Load the route data from CSV
+			d3.csv('bikedaily.csv', function(rows) {
+				
+
+				// collect the data into groups by bike
+				bikes = _.groupBy(rows,function(row){return row.bike_nr;})
+		
+				data = d3.entries(bikes)
+		
+				// set up chart area
+				margin = {top: 0, right: 10, bottom: 20, left: 10},
+					width = 960 - margin.left - margin.right,
+					height = 10000 - margin.top - margin.bottom;
+					
+				svg = d3.select("body").append("svg")
+					.attr("width", width + margin.left + margin.right)
+					.attr("height", height + margin.top + margin.bottom)
+				  .append("g")
+					.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+					
+				// set up the scales based on the data
+				x = d3.scale.linear()
+					.domain([0, 1200])  // should probably change this to something dependent on the data
+					.range([0, width]);
+				
+				y = d3.scale.ordinal()
+					.domain(d3.range(data.length))
+					.rangeBands([0, height], .1);
+				
+				/* extract the array of unique date values from the data set */
+				// pluck out an array of dates for each bike
+				datearrays = _(data).map(function(datum){return _.pluck(datum.value,'date');})
+				
+				// flatten, sort, and unique the resulting data Array
+				// in the future, would be better to just have this and not calculate it, because it's expensive
+				daterange = _.sortBy(_.flatten(datearrays),function(datevalue) {return datevalue;})
+				daterange = _.uniq(daterange,true)	// unique the values - pass true to tell it that it's already sorted
+				
+				// draw the graph for the first time
+				//redraw(bikedates[0])
+				//change(bikedates[10])
+				
+				// when the data is loaded, set the timer
+				intervalTimer = setInterval(function() {
+			
+					// get the array of dates
+					
+					datetograph = daterange.shift();
+					
+					//console.log(daterange[0]);
+					console.log(datetograph)
+					
+					// draw the first date and drop it from the date array
+					redraw(datetograph);
+				
+				
+				}, 50);  // 500 = .5 seconds
+			})
+		
+			/* this draws all of the bars */
+			function redraw(dateString) {
+			
+				// filter the data set for only the bikes that have a value for the given date
+				activebikes = data.filter(function(d,i) {
+						
+						bikedates = _.pluck(d.value,'date');
+						return _.find(bikedates,function(dateval){return dateval == dateString;});
+						
+					});
+					
+				// TODO: re-set the y domain here?
+				
+				// get the existing bars that are already on the graph, use key to determine which already exists
+				// this might be where I need to do the keying shit
+				var bar = svg.selectAll(".bar")
+					.data(activebikes, function(d) {return d.key});
+
+				// ENTER - add new bars that weren't there before, according to the key
+				// make sure to give it the appropriate bar class
+				var barEnter = bar.enter().insert("g",".axis")
+					.attr("class", "bar")
+					.attr("transform", function(d, i) { return "translate(0," + y(i) + ")"; })
+					.style("fill-opacity",0);
+				
+				barEnter.append("rect")
+					.attr("height", y.rangeBand())
+					.attr("width", function(d,i) {
+					
+						thing = _.find(d.value,function(datapoint) {return datapoint['date'] == dateString;})
+						
+						return x(thing['cum_dist'])
+						
+					});
+			
+				barEnter.append("text")
+					.attr("text-anchor", "end")
+					.attr("x", function(d) { return x(d) - 6; })
+					.attr("y", y.rangeBand() / 2)
+					.attr("dy", ".35em")
+					.text(function(d, i) { return i; });
+				
+				// UPDATE - update values for the bars that were there before, according to the key
+				
+				// TODO: this probably should be using y of the key value and not y(i)
+				var barUpdate = d3.transition(bar)
+					.attr("transform", function(d,i) {return "translate(0," + (d.y0 = y(i)) + ")"; })
+					.style("fill-opacity", 1);
+				
+				barUpdate.select("rect")
+					.attr("width", function(d,i) {
+					
+						thing = _.find(d.value,function(datapoint) {return datapoint['date'] == dateString;})
+						
+						return x(thing['cum_dist'])
+						
+					});
+				
+				// TODO: update the displayed values here
+				
+				// clear the timer if we're done
+				if (daterange.length <= 0) {
+					clearInterval(intervalTimer);
+				}
+				
+			}
+			
+		</script>
+	</body>
+</html>

@@ -1,0 +1,17 @@
+Initial commit with basic graph that doesn't really work
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+# On branch master
+#
+# Initial commit
+#
+# Changes to be committed:
+#   (use "git rm --cached <file>..." to unstage)
+#
+#	new file:   backbone-min.js
+#	new file:   bikedaily.csv
+#	new file:   d3/d3.v2.js
+#	new file:   index.html
+#	new file:   index2.html
+#	new file:   underscore-min.js
+#
