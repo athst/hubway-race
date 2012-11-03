@@ -71,34 +71,61 @@
 				daterange = _.sortBy(_.flatten(datearrays),function(datevalue) {return datevalue;})
 				daterange = _.uniq(daterange,true)	// unique the values - pass true to tell it that it's already sorted
 				
+				// create container array to hold the cumulative values
+				
+				biketotals = _.map(data, function(bike) {
+				
+						bikeobj = new Object();
+						bikeobj.key = bike.key;
+						bikeobj['total_miles'] = 0;
+						bikeobj['total_trips'] = 0;
+						return bikeobj;
+					})
+				
 				// when the data is loaded, set the timer and start drawing the graph
 				intervalTimer = setInterval(function() {
-			
-					// draw the first date and drop it from the date array
+					
+					// pull out the next date from the array
 					datetograph = daterange.shift();
-					//console.log(datetograph)
-					redraw(datetograph);
+				
+					dailytotals2 = _.map(data, function(bike) {
+					
+						return _.find(bike.value,function(bikeday) {return bikeday['date'] == datetograph})
+					})
+					
+					// remove all the bikes from the array that didn't have any values for the datearrays
+					// there is probably a better way to do this in one step but I couldn't find it
+					dailytotals2 = _.compact(dailytotals2)
+					
+					// add the daily distance and trip totals to the bike array
+					// this is really expensive - need to find a more efficient way of doing this step
+					dailytotals2.forEach(function(bikeday) {
+					
+						bike = _.find(biketotals,function(bike){return bike.key == bikeday.bike_nr});
+						
+						// need to do parseFloat or else it tries to add strings together and it fucks up
+						bike['total_miles'] = parseFloat(bike['total_miles']) + parseFloat(bikeday['distance']);
+						bike['total_trips'] = parseFloat(bike['total_trips']) + parseFloat(bikeday['trip_count']);
+						
+						});
+					
+					// draw the date with the new calculations
+					redraw(biketotals,datetograph);
 								
 				}, 50);  // 500 = .5 seconds
 			})
 		
 			/* this draws all of the bars */
-			function redraw(dateString) {
+			function redraw(biketotals,dateString) {
 			
 				// filter the data set for only the bikes that have a value for the given date
-				activebikes = data.filter(function(d,i) {
-						
-						bikedates = _.pluck(d.value,'date');
-						return _.find(bikedates,function(dateval){return dateval == dateString;});
-						
-					});
-					
+
 				// TODO: re-set the y domain here?
 				
 				// get the existing bars that are already on the graph, use key to determine which already exists
 				// this might be where I need to do the keying shit
 				var bar = svg.selectAll(".bar")
-					.data(activebikes, function(d) {return d.key});
+					.data(biketotals, function(d) {return d.key});
 
 				// ENTER - add new bars that weren't there before, according to the key
 				// make sure to give it the appropriate bar class
@@ -109,11 +136,11 @@
 				
 				barEnter.append("rect")
 					.attr("height", y.rangeBand())
-					.attr("width", function(d,i) {
+					.attr("width", function(d) {
 					
-						thing = _.find(d.value,function(datapoint) {return datapoint['date'] == dateString;})
+						//thing = _.find(d.value,function(datapoint) {return datapoint['date'] == dateString;})
 						
-						return x(thing['cum_dist'])
+						return x(d['total_miles'])
 						
 					});
 			
@@ -132,11 +159,11 @@
 					.style("fill-opacity", 1);
 				
 				barUpdate.select("rect")
-					.attr("width", function(d,i) {
+					.attr("width", function(d) {
 					
-						thing = _.find(d.value,function(datapoint) {return datapoint['date'] == dateString;})
+						//thing = _.find(d.value,function(datapoint) {return datapoint['date'] == dateString;})
 						
-						return x(thing['cum_dist'])
+						return x(d['total_miles'])
 						
 					});
 				
