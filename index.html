@@ -55,7 +55,7 @@
 			
 			<div style="display:inline-block;border:1px solid; margin-left:1em;" class="infohead">
 				<ul>
-					<li><a href="#">replay</a></li>
+					<li><a href="" id="replay">replay</a></li>
 					<li>race call <input type="checkbox" onchange="toggleRaceCall();" checked></li>
 					<li>sort <input type="checkbox" onchange="toggleSort();" checked></li>
 				</ul>
@@ -80,6 +80,21 @@
 			// create toggles to control these options
 			var sort = true;
 			var racecall = true;
+			
+			// set up the control links
+			window.onload = function() {
+			
+				var replay = document.getElementById("replay");
+				
+				replay.onclick = function() {
+					
+					restart();
+					
+					// don't reload the page
+					return false;
+				};
+				
+			}
 			
 			function toggleSort() {
 				sort = !sort
@@ -147,67 +162,8 @@
 					.orient("bottom"));
 				
 				
-				/* extract the array of unique date values from the data set */
-				// pluck out an array of dates for each bike
-				datearrays = _(data).map(function(datum){return _.pluck(datum.value,'date');})
+				restart();
 				
-				// flatten, sort, and unique the resulting data Array
-				// in the future, would be better to just have this and not calculate it, because it's expensive
-				daterange = _.sortBy(_.flatten(datearrays),function(datevalue) {return datevalue;})
-				daterange = _.uniq(daterange,true)	// unique the values - pass true to tell it that it's already sorted
-				
-				// create container array to hold the cumulative values
-				
-				biketotals = _.map(data, function(bike) {
-				
-						bikeobj = new Object();
-						bikeobj.key = bike.key;
-						bikeobj['total_miles'] = 0;
-						bikeobj['total_trips'] = 0;
-						return bikeobj;
-					})
-			
-				bigboard("Go!!!");
-				
-				// when the data is loaded, set the timer and start drawing the graph
-				intervalTimer = setInterval(function() {
-					
-					// pull out the next date from the array
-					datetograph = daterange.shift();
-				
-					dailytotals2 = _.map(data, function(bike) {
-					
-						return _.find(bike.value,function(bikeday) {return bikeday['date'] == datetograph})
-					})
-					
-					// remove all the bikes from the array that didn't have any values for the datearrays
-					// there is probably a better way to do this in one step but I couldn't find it
-					dailytotals2 = _.compact(dailytotals2)
-					
-					// add the daily distance and trip totals to the bike array
-					// this is really expensive - need to find a more efficient way of doing this step
-					dailytotals2.forEach(function(bikeday) {
-					
-						bike = _.find(biketotals,function(bike){return bike.key == bikeday.bike_nr});
-						
-						// need to do parseFloat or else it tries to add strings together and it fucks up
-						bike['total_miles'] = parseFloat(bike['total_miles']) + parseFloat(bikeday['distance']);
-						bike['total_trips'] = parseFloat(bike['total_trips']) + parseFloat(bikeday['trip_count']);
-						
-						});
-					
-					// draw the date with the new calculations
-					
-					redraw(biketotals,datetograph);
-					bigboard(datetograph);
-					// animating the sort like this looks jerky and awful - need to find a way to make it smoother
-					/*
-					d3.transition()
-						.duration(500)
-						.each(redraw(biketotals,datetograph));
-					*/
-					
-				}, 100);  // 500 = .5 seconds
 			})
 		
 				
@@ -293,6 +249,94 @@
 					clearInterval(intervalTimer);
 				}
 				
+			}
+			
+			function restart() {
+			
+				// clear the timer if it is currently running
+				clearInterval(intervalTimer)
+				
+				// reset the daterange array
+				
+				daterange = getDates(data);
+				
+				// reset biketotals
+				biketotals = getBikeTotalArray(data);
+				
+				// restart the interval timer
+				startTimer(biketotals,daterange);
+			}
+			
+			function getDates(data) {
+				/* extract the array of unique date values from the data set */
+				// pluck out an array of dates for each bike
+				datearrays = _(data).map(function(datum){return _.pluck(datum.value,'date');})
+				
+				// flatten, sort, and unique the resulting data Array
+				// in the future, would be better to just have this and not calculate it, because it's expensive
+				daterange = _.sortBy(_.flatten(datearrays),function(datevalue) {return datevalue;})
+				daterange = _.uniq(daterange,true)	// unique the values - pass true to tell it that it's already sorted
+				
+				// return sorted array of dates to iterate through
+				return daterange;
+			}
+			
+			function getBikeTotalArray(data) {
+				
+				// create container array to hold the cumulative values
+				
+				biketotals = _.map(data, function(bike) {
+				
+						bikeobj = new Object();
+						bikeobj.key = bike.key;
+						bikeobj['total_miles'] = 0;
+						bikeobj['total_trips'] = 0;
+						return bikeobj;
+					})
+				
+				return biketotals;
+			}
+			
+			function startTimer(biketotals,daterange) {
+			
+				intervalTimer = setInterval(function() {
+					
+					// pull out the next date from the array
+					datetograph = daterange.shift();
+				
+					dailytotals = _.map(data, function(bike) {
+					
+						return _.find(bike.value,function(bikeday) {return bikeday['date'] == datetograph})
+					})
+					
+					// remove all the bikes from the array that didn't have any values for the datearrays
+					// there is probably a better way to do this in one step but I couldn't find it
+					dailytotals = _.compact(dailytotals)
+					
+					// add the daily distance and trip totals to the bike array
+					// this is really expensive - need to find a more efficient way of doing this step
+					dailytotals.forEach(function(bikeday) {
+					
+						bike = _.find(biketotals,function(bike){return bike.key == bikeday.bike_nr});
+						
+						// need to do parseFloat or else it tries to add strings together and it fucks up
+						bike['total_miles'] = parseFloat(bike['total_miles']) + parseFloat(bikeday['distance']);
+						bike['total_trips'] = parseFloat(bike['total_trips']) + parseFloat(bikeday['trip_count']);
+						
+						});
+					
+					// draw the date with the new calculations
+					
+					redraw(biketotals,datetograph);
+					bigboard(datetograph);
+					// animating the sort like this looks jerky and awful - need to find a way to make it smoother
+					/*
+					d3.transition()
+						.duration(500)
+						.each(redraw(biketotals,datetograph));
+					*/
+					
+				}, 100);  // 500 = .5 seconds
 			}
 			
 		</script>
