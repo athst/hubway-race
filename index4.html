@@ -36,14 +36,13 @@
 			// Load the route data from CSV
 			d3.csv('bikedaily.csv', function(rows) {
 				
-
 				// collect the data into groups by bike
 				bikes = _.groupBy(rows,function(row){return row.bike_nr;})
 		
 				data = d3.entries(bikes)
 		
 				// set up chart area
-				margin = {top: 0, right: 10, bottom: 20, left: 30},
+				margin = {top: 0, right: 10, bottom: 20, left: 50},
 					width = 960 - margin.left - margin.right,
 					height = 10000 - margin.top - margin.bottom;
 					
@@ -122,6 +121,15 @@
 
 				// TODO: re-set the y domain here?
 				
+				// sort the bars here?
+				
+				biketotals.sort(function(a,b) {
+				
+					return b.total_miles - a.total_miles;
+					
+				});
+				
+				
 				// get the existing bars that are already on the graph, use key to determine which already exists
 				// this might be where I need to do the keying shit
 				var bar = svg.selectAll(".bar")
@@ -138,8 +146,6 @@
 					.attr("height", y.rangeBand())
 					.attr("width", function(d) {
 					
-						//thing = _.find(d.value,function(datapoint) {return datapoint['date'] == dateString;})
-						
 						return x(d['total_miles'])
 						
 					});
@@ -149,27 +155,25 @@
 					.attr("x", function(d) { return x(d) - 6; })
 					.attr("y", y.rangeBand() / 2)
 					.attr("dy", ".35em")
-					.text(function(d, i) { return i; });
+					.text(function(d, i) { return d.key; });
 				
 				// UPDATE - update values for the bars that were there before, according to the key
 				
 				// TODO: this probably should be using y of the key value and not y(i)
 				var barUpdate = d3.transition(bar)
+					//.attr("transform", function(d,i) {return "translate(0," + (d.y0 = y(i)) + ")"; })
 					.attr("transform", function(d,i) {return "translate(0," + (d.y0 = y(i)) + ")"; })
 					.style("fill-opacity", 1);
 				
 				barUpdate.select("rect")
 					.attr("width", function(d) {
 					
-						//thing = _.find(d.value,function(datapoint) {return datapoint['date'] == dateString;})
-						
 						return x(d['total_miles'])
 						
 					});
 				
 				// EXIT
 				
-				/*
 				var barExit = d3.transition(bar.exit())
 					.attr("transform", function(d) {return "translate(0," + (d.y0 + height) + ")"; })
 					.style("fill-opacity",0)
@@ -178,12 +182,10 @@
 				barExit.select("rect")
 					.attr("width", function(d,i) {
 					
-						thing = _.find(d.value,function(datapoint) {return datapoint['date'] == dateString;})
-						
-						return x(thing['cum_dist'])
+						return x(d['total_miles'])
 						
 					});
-				*/
+				
 				
 				// TODO: update the displayed values here
 				
