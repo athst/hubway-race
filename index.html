@@ -49,8 +49,9 @@
 				</ul>
 			</div>
 			
-			<div style="display:inline-block; float:right;">
+			<div style="display:inline-block; float:right;text-align:right;width:180px;">
 				<h1 class="announce" style="margin:0;">Loading Data...</h1>
+				<span id="racecall"></span>
 			</div>
 			
 			<div style="display:inline-block;border:1px solid; margin-left:1em;" class="infohead">
@@ -94,6 +95,8 @@
 					return false;
 				};
 				
+				// should bring the toggleSort/toggleRaceCall checkbox actions in here too so it's not in the html
+				
 			}
 			
 			function toggleSort() {
@@ -103,7 +106,6 @@
 			function toggleRaceCall() {
 				racecall = !racecall
 			}
-			
 			
 			// update the announce field
 			function bigboard(message) {
@@ -256,6 +258,10 @@
 				// clear the timer if it is currently running
 				clearInterval(intervalTimer)
 				
+				// clear the race call stats
+				top_distance = 0.0;
+				previous_leader = null;
+				
 				// reset the daterange array
 				
 				daterange = getDates(data);
@@ -297,6 +303,9 @@
 				return biketotals;
 			}
 			
+			var top_distance = 0.0;
+			var previous_leader;
+			
 			function startTimer(biketotals,daterange) {
 			
 				intervalTimer = setInterval(function() {
@@ -312,23 +321,50 @@
 					// remove all the bikes from the array that didn't have any values for the datearrays
 					// there is probably a better way to do this in one step but I couldn't find it
 					dailytotals = _.compact(dailytotals)
+
+					var current_leader = previous_leader;
+					
+					//top_distance = parseFloat(current_leader['total_miles']);
+					
+					top_distance = current_leader? parseFloat(current_leader['total_miles']) : 0.0
 					
 					// add the daily distance and trip totals to the bike array
 					// this is really expensive - need to find a more efficient way of doing this step
 					dailytotals.forEach(function(bikeday) {
 					
-						bike = _.find(biketotals,function(bike){return bike.key == bikeday.bike_nr});
-						
-						// need to do parseFloat or else it tries to add strings together and it fucks up
-						bike['total_miles'] = parseFloat(bike['total_miles']) + parseFloat(bikeday['distance']);
-						bike['total_trips'] = parseFloat(bike['total_trips']) + parseFloat(bikeday['trip_count']);
+							bike = _.find(biketotals,function(bike){return bike.key == bikeday.bike_nr});
+							
+							// need to do parseFloat or else it tries to add strings together and it fucks up
+							bike['total_miles'] = parseFloat(bike['total_miles']) + parseFloat(bikeday['distance']);
+							bike['total_trips'] = parseFloat(bike['total_trips']) + parseFloat(bikeday['trip_count']);
+							
+							// calculations for race calls
+							if (bike['total_miles'] > top_distance) {
+							
+								current_leader = bike;
+								top_distance = bike['total_miles']
+							}
+							else {
+								// no change
+							}
 						
 						});
 					
-					// draw the date with the new calculations
-					
+					// redraw the graph
 					redraw(biketotals,datetograph);
+					
+					// draw the date with the new calculations
 					bigboard(datetograph);
+					
+					// call the Race
+					if (current_leader != previous_leader) {
+						previous_leader = current_leader
+						d3.select("#racecall").html("<b>" + current_leader.key + "</b> has captured the yellow jersey in " + current_leader['total_trips'] + " trips!")
+					}
+					else {
+						// no change
+					}
+					
 					// animating the sort like this looks jerky and awful - need to find a way to make it smoother
 					/*
 					d3.transition()
