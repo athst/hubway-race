@@ -32,6 +32,7 @@
 			var width;
 			var height;
 			var intervalTimer;
+			var altKey;
 			
 			// Load the route data from CSV
 			d3.csv('bikedaily.csv', function(rows) {
@@ -109,11 +110,22 @@
 						});
 					
 					// draw the date with the new calculations
+					
 					redraw(biketotals,datetograph);
-								
-				}, 50);  // 500 = .5 seconds
+					
+					// animating the sort like this looks jerky and awful - need to find a way to make it smoother
+					/*
+					d3.transition()
+						.duration(500)
+						.each(redraw(biketotals,datetograph));
+					*/			
+				}, 100);  // 500 = .5 seconds
 			})
 		
+				
+			//var fill = d3.scale.category20c();
+			var fill = d3.scale.category10();
+			
 			/* this draws all of the bars */
 			function redraw(biketotals,dateString) {
 			
@@ -129,6 +141,7 @@
 					
 				});
 				
+				y.domain(biketotals.map(function(d) {return d.key;}));
 				
 				// get the existing bars that are already on the graph, use key to determine which already exists
 				// this might be where I need to do the keying shit
@@ -140,7 +153,8 @@
 				var barEnter = bar.enter().insert("g",".axis")
 					.attr("class", "bar")
 					.attr("transform", function(d, i) { return "translate(0," + y(i) + ")"; })
-					.style("fill-opacity",0);
+					.style("fill-opacity",0)
+					.style("fill",function(d) {return fill(d.key);});
 				
 				barEnter.append("rect")
 					.attr("height", y.rangeBand())
@@ -160,9 +174,16 @@
 				// UPDATE - update values for the bars that were there before, according to the key
 				
 				// TODO: this probably should be using y of the key value and not y(i)
+				/*
 				var barUpdate = d3.transition(bar)
 					//.attr("transform", function(d,i) {return "translate(0," + (d.y0 = y(i)) + ")"; })
-					.attr("transform", function(d,i) {return "translate(0," + (d.y0 = y(i)) + ")"; })
+					.attr("transform", function(d,i) {return "translate(0," + (d.y0 = y(d.key)) + ")"; })
+					.style("fill-opacity", 1);
+				*/
+				
+				var barUpdate = d3.transition(bar)
+					//.attr("transform", function(d,i) {return "translate(0," + (d.y0 = y(i)) + ")"; })
+					.attr("transform", function(d,i) {return "translate(0," + (d.y0 = y(d.key)) + ")"; })
 					.style("fill-opacity", 1);
 				
 				barUpdate.select("rect")
