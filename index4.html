@@ -57,15 +57,15 @@
 			<div style="display:inline-block;border:1px solid; margin-left:1em;" class="infohead">
 				<ul>
 					<li><a href="#">replay</a></li>
-					<li>race call <input type="checkbox" onchange="toggleRaceCall();"></li>
-					<li>sort <input type="checkbox" onchange="togglesort();"></li>
+					<li>race call <input type="checkbox" onchange="toggleRaceCall();" checked></li>
+					<li>sort <input type="checkbox" onchange="toggleSort();" checked></li>
 				</ul>
 			</div>
 		</div>
 		
 		<script type="text/javascript">
 			
-			// based on mike bostock's https://gist.github.com/1584697
+			// much of this cobbled together from several of mike bostock's examples including https://gist.github.com/1584697
 	
 			// global variables like this is probably not the right way
 			var data;
@@ -76,7 +76,20 @@
 			var width;
 			var height;
 			var intervalTimer;
-			var altKey;
+			//var altKey; // only used if doing the bar transition animations
+			
+			// create toggles to control these options
+			var sort = true;
+			var racecall = true;
+			
+			function toggleSort() {
+				sort = !sort
+			}
+			
+			function toggleRaceCall() {
+				racecall = !racecall
+			}
+			
 			
 			// update the announce field
 			function bigboard(message) {
@@ -215,13 +228,17 @@
 				// TODO: re-set the y domain here?
 				
 				// sort the bars here?
-				
-				biketotals.sort(function(a,b) {
-				
-					return b.total_miles - a.total_miles;
+				if (sort) {
+					biketotals.sort(function(a,b) {
 					
-				});
-				
+						return b.total_miles - a.total_miles;
+						
+					});
+				}
+				else {
+					// don't sort, duh!
+					
+				}
 				y.domain(biketotals.map(function(d) {return d.key;}));
 				
 				// get the existing bars that are already on the graph, use key to determine which already exists
