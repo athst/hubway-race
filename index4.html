@@ -38,7 +38,7 @@
 		<div style="margin-bottom:30px; margin-left:10px; width:950px;">
 			<div style="display:inline-block;float:left;">
 				<h1 style="margin:0;">Hubway Bike Race!!!!!</h1>
-				Which Hubway bike will be the first to 1000 miles?!
+				Which Hubway bike will be the first ridden to 1000 miles?!
 			</div>
 			
 			<div style="display:inline-block;border:1px solid; margin-left:1em;float:right;" class="infohead">
@@ -52,7 +52,6 @@
 			<div style="display:inline-block; float:right;">
 				<h1 class="announce" style="margin:0;">Ready...</h1>
 			</div>
-			
 			
 			<div style="display:inline-block;border:1px solid; margin-left:1em;" class="infohead">
 				<ul>
@@ -212,33 +211,31 @@
 					d3.transition()
 						.duration(500)
 						.each(redraw(biketotals,datetograph));
-					*/			
+					*/
+					
 				}, 100);  // 500 = .5 seconds
 			})
 		
 				
-			//var fill = d3.scale.category20c();
+			// add some nice colors
 			var fill = d3.scale.category10();
 			
 			/* this draws all of the bars */
 			function redraw(biketotals,dateString) {
 			
-				// filter the data set for only the bikes that have a value for the given date
-
-				// TODO: re-set the y domain here?
-				
-				// sort the bars here?
+				// sort the bars if the option toggle is enabled
 				if (sort) {
 					biketotals.sort(function(a,b) {
 					
+						// sort based on total miles descending
 						return b.total_miles - a.total_miles;
 						
 					});
 				}
 				else {
-					// don't sort, duh!
-					
+					// don't sort, duh!	
 				}
+				
 				y.domain(biketotals.map(function(d) {return d.key;}));
 				
 				// get the existing bars that are already on the graph, use key to determine which already exists
@@ -271,14 +268,6 @@
 				
 				// UPDATE - update values for the bars that were there before, according to the key
 				
-				// TODO: this probably should be using y of the key value and not y(i)
-				/*
-				var barUpdate = d3.transition(bar)
-					//.attr("transform", function(d,i) {return "translate(0," + (d.y0 = y(i)) + ")"; })
-					.attr("transform", function(d,i) {return "translate(0," + (d.y0 = y(d.key)) + ")"; })
-					.style("fill-opacity", 1);
-				*/
-				
 				var barUpdate = d3.transition(bar)
 					//.attr("transform", function(d,i) {return "translate(0," + (d.y0 = y(i)) + ")"; })
 					.attr("transform", function(d,i) {return "translate(0," + (d.y0 = y(d.key)) + ")"; })
@@ -304,12 +293,6 @@
 						return x(d['total_miles'])
 						
 					});
-				
-				
-				
-				
-				
-				// TODO: update the displayed values here
 				
 				// clear the timer when we're done so it doesn't continue forever
 				if (daterange.length <= 0) {
