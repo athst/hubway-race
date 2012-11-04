@@ -45,12 +45,12 @@
 				<ul>
 					<li>made by <a href="https://twitter.com/athst">Jon Nguyen</a></li>
 					<li>for the <a href="http://hubwaydatachallenge.org/">Hubway Data Viz Challenge</a></li>
-					<li>with <a href="http://d3js.org/">D3.js</a></li>
+					<li>with <a href="http://d3js.org/">D3</a></li>
 				</ul>
 			</div>
 			
 			<div style="display:inline-block; float:right;">
-				<h1 class="announce" style="margin:0;">Ready...</h1>
+				<h1 class="announce" style="margin:0;">Loading Data...</h1>
 			</div>
 			
 			<div style="display:inline-block;border:1px solid; margin-left:1em;" class="infohead">
@@ -97,13 +97,9 @@
 				
 			}
 			
-			/*
-			var m1 = "Ready...";
-			var m2 = "Set...";
-			setTimeout(bigboard(m1),1000);
-			setTimeout(bigboard(m2),1000);
-			*/
-			
+			// wanted this to be more smooth to set attention for beginning the animation, but not sure how to do it yet
+			setTimeout(function(){bigboard("Ready... Set..");},2000);
+						
 			// Load the route data from CSV
 			d3.csv('bikedaily.csv', function(rows) {
 				
@@ -170,9 +166,7 @@
 						bikeobj['total_trips'] = 0;
 						return bikeobj;
 					})
-				
-				bigboard("Ready...");
-				bigboard("Set...");
+			
 				bigboard("Go!!!");
 				
 				// when the data is loaded, set the timer and start drawing the graph
