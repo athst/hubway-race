@@ -38,7 +38,7 @@
 		<div style="margin-bottom:30px; margin-left:10px; width:950px;">
 			<div style="display:inline-block;float:left;">
 				<h1 style="margin:0;">Hubway Bike Race!!!!!</h1>
-				Which Hubway bike will be the first ridden to 1000 miles?!
+				884 bikes.  Which will be the first ridden 1000 miles?!
 			</div>
 			
 			<div style="display:inline-block;border:1px solid; margin-left:1em;float:right;" class="infohead">
@@ -57,7 +57,6 @@
 			<div style="display:inline-block;border:1px solid; margin-left:1em;" class="infohead">
 				<ul>
 					<li><a href="" id="replay">replay</a></li>
-					<li>race call <input type="checkbox" onchange="toggleRaceCall();" checked></li>
 					<li>sort <input type="checkbox" onchange="toggleSort();" checked></li>
 				</ul>
 			</div>
@@ -101,10 +100,6 @@
 			
 			function toggleSort() {
 				sort = !sort
-			}
-			
-			function toggleRaceCall() {
-				racecall = !racecall
 			}
 			
 			// update the announce field
@@ -359,7 +354,8 @@
 					// call the Race
 					if (current_leader != previous_leader) {
 						previous_leader = current_leader
-						d3.select("#racecall").html("<b>" + current_leader.key + "</b> has captured the yellow jersey in " + current_leader['total_trips'] + " trips!")
+						d3.select("#racecall").html("<b style='color:" + fill(current_leader.key) +";'>" + current_leader.key + "</b> has captured the yellow jersey in " + current_leader['total_trips'] + " trips!")
+						
 					}
 					else {
 						// no change
